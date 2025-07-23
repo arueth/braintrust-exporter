@@ -61,12 +61,25 @@ def export_experiments(project: dict[str, str]):
             experiment_df = pd.read_json(io.StringIO(current_experiment_response.text))
             logger.debug(experiment_df)
 
+            experiment_events_df = pd.DataFrame.from_records(experiment_df["events"])
+            logger.debug(experiment_events_df)
+            if len(experiment_events_df) > 0:
+                experiment_events_df.drop(
+                    axis=1,
+                    columns=[
+                        "_pagination_key",
+                        "_xact_id",
+                    ],
+                    inplace=True,
+                )
+            logger.debug(experiment_events_df)
+
             with open(
                 encoding="utf-8",
                 file=f"{OUTPUT_DIR}/{PROJECT_NAME_DIRECTORY}/experiment_{experiment_name_file}.cvs",
                 mode="w",
             ) as file:
-                file.write(experiment_df.to_csv())
+                file.write(experiment_events_df.to_csv(index=False))
         except Exception as e:
             logger.error("Error exporting experiment '%s': %s", experiment["name"], e)
             raise e
@@ -105,6 +118,19 @@ def export_datasets(project: dict[str, str]):
             current_dataset = current_dataset_response.json()
             logger.debug(current_dataset)
 
+            dataset_events_df = pd.DataFrame.from_records(current_dataset["events"])
+            logger.debug(dataset_events_df)
+            if len(dataset_events_df) > 0:
+                dataset_events_df.drop(
+                    axis=1,
+                    columns=[
+                        "_pagination_key",
+                        "_xact_id",
+                    ],
+                    inplace=True,
+                )
+            logger.debug(dataset_events_df)
+
             dataset_df = pd.read_json(io.StringIO(current_dataset_response.text))
 
             with open(
@@ -112,7 +138,7 @@ def export_datasets(project: dict[str, str]):
                 file=f"{OUTPUT_DIR}/{PROJECT_NAME_DIRECTORY}/dataset_{dataset_name_file}.cvs",
                 mode="w",
             ) as file:
-                file.write(dataset_df.to_csv())
+                file.write(dataset_events_df.to_csv(index=False))
         except Exception as e:
             logger.error("Error exporting dataset %s: %s", dataset, e)
             raise e
